@@ -21,6 +21,18 @@ resource "aws_security_group" "this" {
     }
   }
 
+  # v1.1.0 : node exporter, joignable depuis le poste admin uniquement
+  dynamic "ingress" {
+    for_each = var.enable_monitoring_port ? [9100] : []
+    content {
+      description = "Node exporter (admin uniquement)"
+      from_port   = ingress.value
+      to_port     = ingress.value
+      protocol    = "tcp"
+      cidr_blocks = [var.admin_cidr]
+    }
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -28,8 +40,6 @@ resource "aws_security_group" "this" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Un SG attache a une instance ne peut pas etre supprime :
-  # on cree le nouveau, on le rattache, puis on supprime l'ancien.
   lifecycle {
     create_before_destroy = true
   }
